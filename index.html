@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Mobile-first viewport with safe-area support for iPhone notch/home bar -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>FairShare — Smart Receipt & Bill Splitter</title>
+  <link rel="stylesheet" href="styles.css">
+  <!-- Google Fonts: Inter/Plus Jakarta Sans for high-legibility mobile typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tesseract.js from CDN for optional in-browser client-side OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</head>
+<body>
+
+  <!-- Top App Navigation -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo-area">
+        <span class="logo-icon">🧾</span>
+        <div>
+          <h1 class="logo-title">FairShare</h1>
+          <p class="logo-subtitle">Smart Receipt Splitter</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="resetAppBtn" class="btn-subtle" title="Start a fresh bill">🔄 <span class="hide-mobile">New Bill</span></button>
+      </div>
+    </div>
+
+    <!-- Stepper Navigation (Finger-friendly horizontal scroll on mobile) -->
+    <nav class="stepper-nav" aria-label="Bill Split Steps">
+      <button class="step-tab active" data-step="1">
+        <span class="step-num">1</span>
+        <span class="step-label">Receipt & Items</span>
+      </button>
+      <button class="step-tab" data-step="2">
+        <span class="step-num">2</span>
+        <span class="step-label">Friends & Claim</span>
+      </button>
+      <button class="step-tab" data-step="3">
+        <span class="step-num">3</span>
+        <span class="step-label">Summary & Settle</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-main">
+
+    <!-- ========================================== -->
+    <!-- STEP 1: RECEIPT & ITEMS                     -->
+    <!-- ========================================== -->
+    <section id="step1" class="step-section active">
+      <div class="section-card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">1. Upload or Add Receipt</h2>
+            <p class="card-desc">Take a photo, upload an image, or try a sample receipt.</p>
+          </div>
+          <!-- Currency selector -->
+          <div class="currency-picker">
+            <label for="currencySymbol">Currency:</label>
+            <input type="text" id="currencySymbol" value="£" maxlength="4" class="currency-input" title="Change currency symbol (e.g. £, $, €, ₹)">
+          </div>
+        </div>
+
+        <!-- Receipt Upload & Camera Zone -->
+        <div class="upload-zone" id="dropZone">
+          <input type="file" id="receiptFileInput" accept="image/*" capture="environment" class="file-input-hidden">
+          <div class="upload-content">
+            <span class="upload-icon">📸</span>
+            <p class="upload-primary-text"><strong>Take a photo</strong> or <strong>upload receipt</strong></p>
+            <p class="upload-secondary-text">Snap with phone camera or pick image</p>
+            <div class="upload-btn-group">
+              <button type="button" class="btn-primary" id="selectImageBtn">📸 Snap / Choose Photo</button>
+              <button type="button" class="btn-secondary" id="loadSampleBtn">⚡ Try Sample Receipt</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- OCR Scanning Progress Banner -->
+        <div id="ocrProgressCard" class="ocr-progress-card hidden">
+          <div class="ocr-status-header">
+            <div class="spinner"></div>
+            <div>
+              <p class="ocr-status-title" id="ocrStatusTitle">Scanning receipt image...</p>
+              <p class="ocr-status-subtitle" id="ocrStatusSubtitle">Extracting items, quantities, and prices</p>
+            </div>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="ocrProgressBar" class="progress-bar-fill" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Receipt Image Preview (collapsible) -->
+        <div id="imagePreviewContainer" class="image-preview-card hidden">
+          <div class="preview-header">
+            <span class="preview-title">Receipt Photo</span>
+            <button id="removeImageBtn" class="btn-subtle text-danger">Remove</button>
+          </div>
+          <img id="receiptImagePreview" src="" alt="Uploaded Receipt" class="receipt-preview-img">
+        </div>
+
+        <!-- Items Section -->
+        <div class="items-editor-section">
+          <div class="table-toolbar">
+            <h3 class="subsection-title">Receipt Items (<span id="itemCountDisplay">0</span>)</h3>
+            <button id="addItemBtn" class="btn-outline touch-btn">+ Add Item</button>
+          </div>
+
+          <!-- Responsive Items Container (Mobile Cards + Desktop Row Layout) -->
+          <div class="items-cards-list" id="itemsListContainer">
+            <!-- Dynamically populated via JS -->
+          </div>
+
+          <!-- Empty Items State -->
+          <div id="emptyItemsState" class="empty-state">
+            <span class="empty-icon">🍽️</span>
+            <p class="empty-title">No items on receipt yet</p>
+            <p class="empty-subtitle">Upload a photo above or click "Try Sample Receipt" to see how it works!</p>
+          </div>
+
+          <!-- Receipt Subtotal & Charges Config -->
+          <div class="charges-summary-card">
+            <div class="charges-row">
+              <span class="charges-label">Food & Drinks Subtotal:</span>
+              <span class="charges-value" id="subtotalDisplay">£0.00</span>
+            </div>
+
+            <!-- Service Charge Config (Large touch pills) -->
+            <div class="charges-row service-row">
+              <div class="service-config">
+                <span class="charges-label">Service Charge / Tip:</span>
+                <div class="service-presets">
+                  <button class="pill-btn service-preset-btn touch-pill" data-rate="0">0%</button>
+                  <button class="pill-btn service-preset-btn touch-pill active" data-rate="12.5">12.5%</button>
+                  <button class="pill-btn service-preset-btn touch-pill" data-rate="15">15%</button>
+                  <button class="pill-btn service-preset-btn touch-pill" data-rate="custom">Custom</button>
+                </div>
+              </div>
+              <div class="service-input-wrap">
+                <div class="rate-input-box">
+                  <input type="number" id="serviceRateInput" value="12.5" min="0" max="100" step="0.5" inputmode="decimal" class="small-num-input">
+                  <span>%</span>
+                </div>
+                <span class="charges-value" id="serviceChargeDisplay">£0.00</span>
+              </div>
+            </div>
+
+            <!-- Tax / VAT / Other if applicable -->
+            <div class="charges-row">
+              <span class="charges-label">Tax / Extra Fee (Optional):</span>
+              <div class="tax-input-wrap">
+                <span class="curr-symbol">£</span>
+                <input type="number" id="taxAmountInput" value="0.00" min="0" step="0.01" inputmode="decimal" class="small-num-input" style="width: 80px;">
+              </div>
+            </div>
+
+            <div class="charges-divider"></div>
+
+            <div class="charges-row grand-total-row">
+              <span class="grand-label">Grand Total on Receipt:</span>
+              <span class="grand-total-value" id="grandTotalDisplay">£0.00</span>
+            </div>
+          </div>
+
+          <!-- Proceed Button to Step 2 (Desktop Footer) -->
+          <div class="step-footer desktop-only">
+            <button id="goToStep2Btn" class="btn-primary btn-large touch-btn">
+              Proceed to Assign Items &rarr;
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- STEP 2: FRIENDS & ITEM CLAIMING             -->
+    <!-- ========================================== -->
+    <section id="step2" class="step-section">
+      <div class="section-card">
+        <!-- Friends Management Header -->
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">2. Add Friends & Who Paid</h2>
+            <p class="card-desc">Add everyone at the table and select who put their card down.</p>
+          </div>
+        </div>
+
+        <!-- Add Friend Form (Mobile-first large input & button) -->
+        <form id="addFriendForm" class="add-friend-form">
+          <input type="text" id="friendNameInput" placeholder="Friend's name (e.g. Shabir, Sarah, Alex)" class="input-text touch-input" required autocomplete="off">
+          <button type="submit" class="btn-primary touch-btn">+ Add Friend</button>
+        </form>
+
+        <!-- Payer Selection Banner -->
+        <div class="payer-selector-card">
+          <div class="payer-info">
+            <span class="payer-badge">💳 The Payer</span>
+            <span class="payer-explainer">Who paid the bill?</span>
+          </div>
+          <select id="payerSelect" class="payer-dropdown touch-select">
+            <option value="">Select who paid...</option>
+          </select>
+        </div>
+
+        <!-- Friends Pill List (Comfortable touch targets) -->
+        <div class="friends-list" id="friendsPillsContainer">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="section-divider"></div>
+
+        <!-- Claiming Interface -->
+        <div class="claiming-header">
+          <div>
+            <h3 class="subsection-title">Claim & Split Items</h3>
+            <p class="card-desc">Tap friends to claim. Select multiple friends to split, or tap "Everyone" for shared plates.</p>
+          </div>
+          <div class="claiming-legend">
+            <span class="legend-badge unassigned">Unassigned</span>
+            <span class="legend-badge claimed">Claimed</span>
+            <span class="legend-badge shared">Shared</span>
+          </div>
+        </div>
+
+        <!-- Item Cards for Claiming -->
+        <div class="claiming-cards-container" id="claimingCardsContainer">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Step 2 Navigation Footer (Desktop) -->
+        <div class="step-footer split-buttons desktop-only">
+          <button class="btn-secondary touch-btn" id="backToStep1Btn">&larr; Back to Items</button>
+          <button class="btn-primary btn-large touch-btn" id="goToStep3Btn">
+            View Final Summary &rarr;
+          </button>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- STEP 3: SUMMARY & SETTLEMENT               -->
+    <!-- ========================================== -->
+    <section id="step3" class="step-section">
+      <div class="section-card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">3. Final Breakdown & Settle Up</h2>
+            <p class="card-desc">Transparent calculation of what each person owes the payer, down to the penny.</p>
+          </div>
+          <button id="copyWhatsAppBtn" class="btn-accent touch-btn">
+            📋 Copy WhatsApp Breakdown
+          </button>
+        </div>
+
+        <!-- Receipt Balance Status Check -->
+        <div id="balanceBanner" class="balance-banner">
+          <div class="balance-icon" id="balanceIcon">⏳</div>
+          <div class="balance-details">
+            <h4 class="balance-title" id="balanceTitle">Calculating Breakdown...</h4>
+            <p class="balance-subtitle" id="balanceSubtitle">Checking all claimed dishes and totals</p>
+          </div>
+          <div class="balance-numbers">
+            <div class="balance-stat">
+              <span class="stat-label">Assigned:</span>
+              <span class="stat-val" id="assignedTotalDisplay">£0.00</span>
+            </div>
+            <div class="balance-stat">
+              <span class="stat-label">Bill Total:</span>
+              <span class="stat-val" id="summaryBillTotalDisplay">£0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payer Settlement Summary Card -->
+        <div id="payerHeroCard" class="payer-hero-card">
+          <!-- Populated dynamically: Shows who paid, how much they paid, and total owed back to them -->
+        </div>
+
+        <div class="summary-toolbar">
+          <h3 class="subsection-title">Friends Breakdown</h3>
+          <span class="tap-hint">Tap any card to see item details</span>
+        </div>
+
+        <!-- Per-Person Breakdown Cards Grid (Accordion style on mobile) -->
+        <div class="summary-cards-grid" id="summaryCardsGrid">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Step 3 Navigation Footer (Desktop) -->
+        <div class="step-footer split-buttons desktop-only">
+          <button class="btn-secondary touch-btn" id="backToStep2Btn">&larr; Back to Friends & Claim</button>
+          <button class="btn-outline touch-btn" id="printReceiptBtn">🖨️ Print / Save PDF</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MOBILE STICKY BOTTOM THUMB NAVIGATION BAR   -->
+  <!-- ========================================== -->
+  <aside class="mobile-bottom-bar" id="mobileBottomBar">
+    <div class="bottom-bar-container">
+      <button type="button" class="bottom-bar-btn btn-secondary touch-btn" id="bottomPrevBtn" aria-label="Previous Step">
+        &larr; Back
+      </button>
+
+      <div class="bottom-bar-status" id="bottomBarStatus">
+        <div class="bottom-step-indicator" id="bottomStepIndicator">Step 1: Items</div>
+        <div class="bottom-total-pill" id="bottomTotalPill">Total: £0.00</div>
+      </div>
+
+      <button type="button" class="bottom-bar-btn btn-primary touch-btn" id="bottomNextBtn" aria-label="Next Step">
+        Next &rarr;
+      </button>
+    </div>
+  </aside>
+
+  <!-- Toast Notification Container -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Educational Explainer Modal -->
+  <div id="mathModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">💡 How Proportional Splitting Works</h3>
+        <button class="modal-close-btn" id="closeMathModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>Instead of splitting service charge equally (which is unfair if one friend ordered a £4 tea and another had a £40 steak), we split service charge <strong>proportionally</strong> based on food & drink spend:</p>
+        <div class="formula-box">
+          <code>Person's Service Charge = (Person's Food Subtotal &divide; Bill Subtotal) &times; Total Service Charge</code>
+        </div>
+        <p><strong>For Shared Items:</strong> If two friends share a £14 Pizza, £7 goes to Friend A and £7 goes to Friend B. Each pays service charge only on their £7 share.</p>
+        <p>This guarantees that every penny of the tip is distributed fairly and sums up exactly to the restaurant's receipt.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    <p>FairShare Bill Splitter &bull; Built with HTML, CSS & JavaScript &bull; <button id="openMathBtn" class="link-btn">How is this calculated?</button></p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
