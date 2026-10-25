@@ -143,6 +143,7 @@ function initDOM() {
     removeImageBtn: document.getElementById('removeImageBtn'),
     itemCountDisplay: document.getElementById('itemCountDisplay'),
     addItemBtn: document.getElementById('addItemBtn'),
+    clearItemsBtn: document.getElementById('clearItemsBtn'),
     itemsListContainer: document.getElementById('itemsListContainer'),
     emptyItemsState: document.getElementById('emptyItemsState'),
     subtotalDisplay: document.getElementById('subtotalDisplay'),
@@ -171,6 +172,7 @@ function initDOM() {
     summaryBillTotalDisplay: document.getElementById('summaryBillTotalDisplay'),
     payerHeroCard: document.getElementById('payerHeroCard'),
     summaryCardsGrid: document.getElementById('summaryCardsGrid'),
+    startNewBillBtn: document.getElementById('startNewBillBtn'),
     copyWhatsAppBtn: document.getElementById('copyWhatsAppBtn'),
     backToStep2Btn: document.getElementById('backToStep2Btn'),
     printReceiptBtn: document.getElementById('printReceiptBtn'),
@@ -226,14 +228,34 @@ function bindEvents() {
     }
   });
 
-  // Reset
-  dom.resetAppBtn.addEventListener('click', () => {
-    if (confirm('Start a fresh bill? This will clear all items and friends.')) {
+  // Clear Order / Start New Bill
+  const handleClearOrder = () => {
+    if (confirm('Clear this order and start a new bill? This will reset all items, friends, and calculations.')) {
       resetState();
       renderAll();
-      showToast('Started fresh bill!');
+      goToStep(1);
+      showToast('Order cleared! Ready for a new bill.');
     }
-  });
+  };
+
+  dom.resetAppBtn.addEventListener('click', handleClearOrder);
+  if (dom.startNewBillBtn) dom.startNewBillBtn.addEventListener('click', handleClearOrder);
+
+  // Clear Items Only (Step 1)
+  if (dom.clearItemsBtn) {
+    dom.clearItemsBtn.addEventListener('click', () => {
+      if (state.items.length === 0) {
+        showToast('No items to clear.');
+        return;
+      }
+      if (confirm('Clear all items on this receipt?')) {
+        state.items = [];
+        renderItemsTable();
+        updateCalculations();
+        showToast('Receipt items cleared.');
+      }
+    });
+  }
 
   // Currency
   dom.currencySymbol.addEventListener('input', (e) => {

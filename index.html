@@ -29,7 +29,9 @@
         </div>
       </div>
       <div class="header-actions">
-        <button id="resetAppBtn" class="btn-subtle" title="Start a fresh bill">🔄 <span class="hide-mobile">New Bill</span></button>
+        <button id="resetAppBtn" class="btn-clear-order touch-btn" title="Clear order and start a new bill">
+          <span class="btn-icon">🔄</span> Clear Order
+        </button>
       </div>
     </div>
 
@@ -111,7 +113,10 @@
         <div class="items-editor-section">
           <div class="table-toolbar">
             <h3 class="subsection-title">Receipt Items (<span id="itemCountDisplay">0</span>)</h3>
-            <button id="addItemBtn" class="btn-outline touch-btn">+ Add Item</button>
+            <div class="toolbar-actions">
+              <button type="button" id="clearItemsBtn" class="btn-subtle text-danger touch-btn" title="Clear all items on this receipt">🗑️ Clear Items</button>
+              <button type="button" id="addItemBtn" class="btn-outline touch-btn">+ Add Item</button>
+            </div>
           </div>
 
           <!-- Responsive Items Container (Mobile Cards + Desktop Row Layout) -->
@@ -294,6 +299,22 @@
         <!-- Per-Person Breakdown Cards Grid (Accordion style on mobile) -->
         <div class="summary-cards-grid" id="summaryCardsGrid">
           <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Start New Bill Card -->
+        <div class="finish-bill-card">
+          <div class="finish-bill-content">
+            <div class="finish-bill-text">
+              <span class="finish-bill-icon">🎉</span>
+              <div>
+                <h4 class="finish-bill-title">Finished with this meal?</h4>
+                <p class="finish-bill-desc">Clear this order and start a fresh bill for your next meal or outing.</p>
+              </div>
+            </div>
+            <button type="button" id="startNewBillBtn" class="btn-primary touch-btn">
+              🔄 Start New Bill
+            </button>
+          </div>
         </div>
 
         <!-- Step 3 Navigation Footer (Desktop) -->

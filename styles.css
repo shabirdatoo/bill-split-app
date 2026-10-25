@@ -1802,6 +1802,104 @@ button {
 }
 
 /* ==========================================================================
+   Clear Order & Finish Bill Actions
+   ========================================================================== */
+
+.btn-clear-order {
+  background: var(--bg-main);
+  border: 1.5px solid var(--border-color);
+  color: var(--danger);
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  padding: 8px 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-clear-order:hover {
+  background: var(--danger-light);
+  border-color: var(--danger-border);
+}
+
+.btn-clear-order:active {
+  transform: scale(0.96);
+  background: #fee2e2;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-subtle-danger {
+  background: transparent;
+  border: none;
+  color: var(--danger);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.btn-subtle-danger:hover {
+  background: var(--danger-light);
+}
+
+/* Finish Bill Celebration Card (Step 3) */
+.finish-bill-card {
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+  border: 1.5px solid var(--success-border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-top: 18px;
+  margin-bottom: 20px;
+}
+
+.finish-bill-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.finish-bill-text {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.finish-bill-icon {
+  font-size: 2rem;
+  background: #ffffff;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--success-border);
+  flex-shrink: 0;
+}
+
+.finish-bill-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #14532d;
+}
+
+.finish-bill-desc {
+  font-size: 0.85rem;
+  color: #166534;
+}
+
+/* ==========================================================================
    Responsive Breakpoints
    ========================================================================== */
 
